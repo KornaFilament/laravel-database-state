@@ -1,81 +1,64 @@
 <?php
 
-namespace pxlrbt\LaravelDatabaseState\Tests;
-
 use Illuminate\Support\Facades\File;
 
-class MakeCommandTest extends TestCase
-{
-    protected function tearDown(): void
-    {
-        File::deleteDirectory(database_path('States'));
+afterEach(function () {
+    File::deleteDirectory(database_path('States'));
+});
 
-        parent::tearDown();
-    }
+it('creates a state file', function () {
+    $this->artisan('make:db-state', ['name' => 'UserRoles'])
+        ->assertSuccessful();
 
-    public function test_it_creates_a_state_file(): void
-    {
-        $this->artisan('make:db-state', ['name' => 'UserRoles'])
-            ->assertSuccessful();
+    $path = database_path('States/UserRoles.php');
 
-        $path = database_path('States/UserRoles.php');
+    expect($path)->toBeFile();
+    expect(File::get($path))
+        ->toContain('class UserRoles')
+        ->toContain('namespace Database\States;')
+        ->toContain('public function __invoke()');
+});
 
-        $this->assertFileExists($path);
-        $this->assertStringContainsString('class UserRoles', File::get($path));
-        $this->assertStringContainsString('namespace Database\States;', File::get($path));
-        $this->assertStringContainsString('public function __invoke()', File::get($path));
-    }
+it('does not overwrite existing file without force', function () {
+    File::ensureDirectoryExists(database_path('States'));
+    File::put(database_path('States/UserRoles.php'), 'original content');
 
-    public function test_it_does_not_overwrite_existing_file_without_force(): void
-    {
-        // Arrange
-        File::ensureDirectoryExists(database_path('States'));
-        File::put(database_path('States/UserRoles.php'), 'original content');
+    $this->artisan('make:db-state', ['name' => 'UserRoles'])
+        ->assertSuccessful();
 
-        // Act
-        $this->artisan('make:db-state', ['name' => 'UserRoles'])
-            ->assertSuccessful();
+    expect(File::get(database_path('States/UserRoles.php')))->toBe('original content');
+});
 
-        // Assert
-        $this->assertEquals('original content', File::get(database_path('States/UserRoles.php')));
-    }
+it('overwrites existing file with force option', function () {
+    File::ensureDirectoryExists(database_path('States'));
+    File::put(database_path('States/UserRoles.php'), 'original content');
 
-    public function test_it_overwrites_existing_file_with_force_option(): void
-    {
-        // Arrange
-        File::ensureDirectoryExists(database_path('States'));
-        File::put(database_path('States/UserRoles.php'), 'original content');
+    $this->artisan('make:db-state', ['name' => 'UserRoles', '--force' => true])
+        ->assertSuccessful();
 
-        // Act
-        $this->artisan('make:db-state', ['name' => 'UserRoles', '--force' => true])
-            ->assertSuccessful();
+    expect(File::get(database_path('States/UserRoles.php')))->toContain('class UserRoles');
+});
 
-        // Assert
-        $this->assertStringContainsString('class UserRoles', File::get(database_path('States/UserRoles.php')));
-    }
+it('converts name to studly case', function () {
+    $this->artisan('make:db-state', ['name' => 'user_roles'])
+        ->assertSuccessful();
 
-    public function test_it_converts_name_to_studly_case(): void
-    {
-        $this->artisan('make:db-state', ['name' => 'user_roles'])
-            ->assertSuccessful();
+    $path = database_path('States/UserRoles.php');
 
-        $this->assertFileExists(database_path('States/UserRoles.php'));
-        $this->assertStringContainsString('class UserRoles', File::get(database_path('States/UserRoles.php')));
-    }
+    expect($path)->toBeFile();
+    expect(File::get($path))->toContain('class UserRoles');
+});
 
-    public function test_it_rejects_reserved_class_names(): void
-    {
-        $this->artisan('make:db-state', ['name' => 'class'])
-            ->assertSuccessful();
+it('rejects reserved class names', function () {
+    $this->artisan('make:db-state', ['name' => 'class'])
+        ->assertSuccessful();
 
-        $this->assertFileDoesNotExist(database_path('States/Class.php'));
-    }
+    expect(database_path('States/Class.php'))->not->toBeFile();
+});
 
-    public function test_it_rejects_invalid_class_names(): void
-    {
-        $this->artisan('make:db-state', ['name' => '123invalid'])
-            ->assertSuccessful();
+it('rejects invalid class names', function () {
+    $this->artisan('make:db-state', ['name' => '123invalid'])
+        ->assertSuccessful();
 
-        $this->assertFileDoesNotExist(database_path('States/123invalid.php'));
-    }
-}
+    expect(database_path('States/123invalid.php'))->not->toBeFile();
+});
