@@ -2,11 +2,9 @@
 
 namespace pxlrbt\LaravelDatabaseState\Commands;
 
-use Database\States\UserState;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 
 class SeedDatabaseStateCommand extends Command
 {

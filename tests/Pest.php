@@ -1,5 +1,5 @@
 <?php
 
-use pxlrbt\LaravelPdfable\Tests\TestCase;
+use pxlrbt\LaravelDatabaseState\Tests\TestCase;
 
 uses(TestCase::class)->in(__DIR__);

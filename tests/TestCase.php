@@ -1,36 +1,21 @@
 <?php
 
-namespace pxlrbt\LaravelPdfable\Tests;
+namespace pxlrbt\LaravelDatabaseState\Tests;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use pxlrbt\LaravelPdfable\PdfableServiceProvider;
+use pxlrbt\LaravelDatabaseState\DatabaseStateServiceProvider;
 
 class TestCase extends Orchestra
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        Factory::guessFactoryNamesUsing(
-            fn (string $modelName) => 'pxlrbt\\LaravelPdfable\\Database\\Factories\\'.class_basename($modelName).'Factory'
-        );
-    }
-
-    protected function getPackageProviders($app)
+    protected function getPackageProviders($app): array
     {
         return [
-            PdfableServiceProvider::class,
+            DatabaseStateServiceProvider::class,
         ];
     }
 
-    public function getEnvironmentSetUp($app)
+    protected function getEnvironmentSetUp($app): void
     {
         config()->set('database.default', 'testing');
-
-        /*
-        $migration = include __DIR__.'/../database/migrations/create_laravel-pdfable_table.php.stub';
-        $migration->up();
-        */
     }
 }
